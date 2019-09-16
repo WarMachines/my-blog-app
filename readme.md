@@ -1,4 +1,4 @@
-This App was developed while learning react tutorial from linkedIn, which will I will extend further to work with react and nodeJs.
+This App was developed while learning react from tutorial on linkedIn, which I will extend further to work with react and nodeJs for my own learning.
 
 This project is developed using React, NodeJs, MongoDB Atlas as backend storage.
 
