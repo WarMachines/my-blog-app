@@ -1,0 +1,202 @@
+1. Initial setup
+    a. npm init -y (Initialize as npm package)
+    b. npm install --save express (Install express)
+
+2. Set up babel (node does not support ES6 natively)  (React create app automatically takes care of it, for front end)
+    a. npm install --save-dev @babel/core @babel/node @bable/preset-env
+    b. create new file named .babelrc, and put following in the file
+        {
+            "presets" : ["@babel/preset-env"]
+        }
+    c. Now we can use ES6 babel will take of it 
+
+3. import express and start server as below:
+    a. import express from 'express'
+    b. create app as:
+        const app = express();
+    c. Now add endpoint with app as:
+        app.get(endpoint, (req, res) = { body here, with res.status(200).json(data) or res.send(data)}>)
+    d. Start listening by binding to a port as:
+        app.listen(portNumber, () => console.log("server is listening on port", portNumber))
+
+4. Run the Nodejs server
+    a. npx babel-node locationOFServer.js file as:
+        npx babel-node src/server.js
+
+5. parser to be used for json data
+    a. import bodyParser from 'body-parser'
+    b. use body parser with app as:
+        app.use(bodyParser.json())
+    c. Use data send as json in post req as
+        res.send(`Hello ${req.body.name`) (here name is the json send from client at first level)
+
+6. Url Parameters in express (for nodejs)
+    a. create endpoint with positioning the url parameter as:
+        app.get('api/user/:name', (req, res) => res.send({`Hello ${req.params.name`}))
+
+7. Restart server automatically after any change were made into any files in project
+    a. Install nodemon
+        npm install --save-dev nodemon
+    b. run command to start server as 
+        npx nodemon --exec npx babel-node src/server.js
+        this will run the command followed by --exec again on every change made into the project
+
+8. Change long command into smaller command as follows:
+    1. Go to package.json
+    2. under the scripts property add another property as (These scripts are aliases for long command)
+        "start": "npx nodemon --exec npx babel-node src/server.js"
+    3. run server now with command "npm start"
+
+9. Load data from body of the req as 
+    a. if req body has data as { "name" : "saurabh", "text":"mycomment"}
+    b. direct assign it to variables or const on the backend as\
+        const { name, text} = req.body;   (Property name should match with properties in the body this to work)\
+
+10. Install MongoDB package for nodeJS/expressJs
+    npm install --save mongodb
+
+11. to wrap up commond functionality in all endpoints like connecting to db and closing we can create another function which will accept another functions as argument as
+    const withDB = async (operation) => {
+        // common code
+        operation()
+    }
+
+    if inner functions has await key work add async in front to withDB function
+    then call this function from endpoint as
+    withDB(() => {
+       await // this is the function that is being passed as an argument
+    })
+
+
+MongoDB
+
+. play nicely with javascript
+. push data into it without worrying about the format/schema of the database or table
+. Structure are not required to be defined in advance
+. I am not using local version of MongoDB, instead using online mongoDBAtlas
+. You connect to mongoDBAtlas via shell, download it from the mongoDBAtlas site
+
+
+1. In mongoDB create a database (mine is my-blog)
+2. run commmand on shell as use my-blog (this will change the db, and curretly used db is my-blog now)4
+3. Insert data into a collection(as table in relational db's) by following commands
+    db.articles.insert([{
+            name : 'learn-react',
+            upvotes : 0,
+            comments : []
+        },
+        {
+             name : 'learn-node',
+            upvotes : 0,
+            comments : []
+        }
+    ])
+4. It will push these items into articles collection of my-blog DB on mongoDB
+5. MongoDB will also push objectId automatically with each entry in collection
+
+6. Queries:
+    a. find
+        1. db.articles.find({})
+            will give all the objects in articles collection
+        2. db.articles.find({ name : 'learn-react})     (match the criteria)
+            Will give all the objects where name is learn-react
+        3. db.articles.findOne({ name : 'learn-react})
+            Run this if you expect the result be only one entry in DB
+        4. db.articles.find({}).pretty()     (can not use it with findOne)
+            It will print the output in better readable format
+    b. Update
+        1. updateOne
+            db.articles.updateOne( { name : 'learn-react' }, {
+                '$set' : {
+                    upvotes : 10
+                }
+            })
+        2. same for update only diff it will update all the entries
+
+
+7. Connect MongoDB from expressjs, nodejs with the mongodb package as
+    a. import { MongoClient } from 'mongodb'
+    b. const uri = get your connection url from atlas using provided option there to connect with application
+    c. const client = await MongoClient.connect(uri, { useNewUrlParser : true});  (this is async call)
+    d. const db = client.db('my-blog');   (move to your database)
+    e. const result = await db.collection('articles').find( { name : 'learn-react' });
+    f. client.close()
+    g. Now since this has await call inside the endpoint change the callback function to async as 
+        app.get(endpoint, async (req, res) => { // above mentioned code hete with await keywords})
+
+
+
+AWS Changes:
+
+1. Create and EC2 instance
+    a. go to aws
+        1. select EC2
+        2. launch instance
+        3. Select Amazon linux 2AMI (selected as free tier), leave default selection
+            a. Click launch
+            b. aws will bring up a window for key value value, this is required for sshing into the Linux server we have just created
+                1. Create new pair
+                2. enter key pair name
+                3. Download key pair (which will be downloading as pem file)
+            c. Setup ssh to use the pem file to log in to linux instance we have just created
+                1. Linux/mac setup:
+                    a. Move pem file into another folder name .ssh under home directly
+                    b. if .ssh exist else create the folder/dir first
+                    c. mv "file from with file name" "path to ~/.ssh/pem-file-name
+                    d. change permission to .pem file using command (chmod 400 ~/.ssh/pem-file-name)
+                2. Windows
+                    a. we will use putty, download it if dont have it
+                    b. open putty gen
+                        1. Load the .pem file using load button
+                        2. save the private key somewhere as we are going to need that key to connect with the EC2 linux instance we have just created
+                    c. open putty
+                        1. copy the public DNS (IPv4), from aws of the instance we have created (can be found in the description after selecting the intance)
+                        2. go to Connection/SSH/Auth
+                        3. Select the key we generated above from .pem file
+                        4. click open
+                        5. It will ask for user name put "ec2-user" there
+                        6. You are not sshing to linux box
+                    d. Also dont forget to whitelist the new IPv4 address of the EC2 linux box into mongoDB Atlas, so application can access the mongoDB from EC2 instace
+            d. install git into EC2 box
+                sudo yum install git (yum is package manager on this EC2 instance)
+            e. Install npm
+                1. We will use nvm to install npm (run following commands inorder) ( can be found at https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-up-node-on-ec2-instance.html)
+                    a. curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+                    b. . ~/.nvm/nvm.sh
+                    c. nvm install node (or nvm install 10.15.3, to install specific version)
+                    d. node -e "console.log('Running Node.js ' + process.version)" (this is to check if node is installed correctly or not)
+            f. install latest npm
+                npm install -g npm@latest
+            g. now clone the code from git repo
+                git clone url
+                go to the directory
+            h. install all node modules
+                npm install
+            i. now the run server
+                npm start
+            j. We will start the server forever
+                1. Use npm package forever
+                    npm install -g forever
+                2. forever start -c "npm start" .
+                    this will run our application on 8000 port
+                3. check if its Running
+                    forever list
+            k. Now we want to access our app on 8080 (default http port) port instead of 8000
+                1. change the port by forwarding request received on port 8080 to 8000
+                    sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8000
+            L. now to access our app from anywhere last thing we need to do is.
+                1. go to EC2 instace, look for security group associated with the instance
+                2. Now go the side pane on aws go to "NETWORK & SECURITY/security group", select the security group of your instance
+                    a. go to inbound tab of the security group we have selected
+                    b. click edit, add rule
+                    c. select HTTP in type
+                    d. select source as anywhere/myip (depending on from where you want your app to be accessible from)
+                    e. save the setting
+            M. now app is available online now
+            N. Go to EC2 instance and get public DNS IPv4 value and hit it on the browser, your web site is online now.    
+
+            
+                    
+                    
+
+
