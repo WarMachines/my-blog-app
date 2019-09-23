@@ -52,12 +52,39 @@ app.post('/api/articles/:name/add-comment', (req, res) => {
 });
 
 app.get('/api/articles/:name', async (req, res) => {
-        withDB(async(db) => {
+        withDB(async (db) => {
             const articleName = req.params.name;
             const articlesInfo = await db.collection('articles').findOne( { name : articleName});
             res.status(200).json(articlesInfo);
         }, res)
 });
+
+app.get('/api/articles/', async (req, res) => {
+    withDB(async (db) => {
+        try {
+        const allArticles = await db.collection('articles').find({}).toArray();
+        res.status(200).json(allArticles);
+        }
+        catch ( error ){
+            console.log(error)
+            throw error;
+        }
+    }, res)
+});
+
+app.post('/api/articles/add-article', (req, res) => {
+    const { name, content } = req.body
+    withDB(async (db)=> {
+        await db.collection('articles').insertOne( { name : name, content : content, upvotes : 0, comments : []}, (err, res) => {
+            if(err) {
+                console.log(err);
+                throw err;
+            }
+        })
+        const allArticles = await db.collection('articles').find({}).toArray();
+        res.status(200).json(allArticles);
+    }, res)
+})
 
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname + '/build/index.html'));
